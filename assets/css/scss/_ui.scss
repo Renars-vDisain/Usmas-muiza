@@ -1,3 +1,31 @@
 @use 'mixins' as *;
 
-// Buttons, content/WYSIWYG styles and other reusable UI go here.
+// Button — Figma "Semantic/Button" (Inter Bold, uppercase, pill).
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 32px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: $accent;
+    color: $cream;
+    cursor: pointer;
+    white-space: nowrap;
+    @include button;
+    @include transition;
+
+    &:hover {
+        @include buttonHover;
+    }
+
+    &.btn--outline {
+        background: transparent;
+        border-color: $cream;
+        color: $cream;
+    }
+
+    &.btn--green{
+        background: $olive;
+    }
+}

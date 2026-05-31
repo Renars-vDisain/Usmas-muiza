@@ -1,0 +1,39 @@
+@use '../mixins' as *;
+
+.section-intro {
+    background-color: $pampas;
+
+    .intro-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .intro-title {
+        @include h2;
+        align-self: center;
+    }
+
+    // Collapsible "more" block — animates open via grid rows (no fixed height).
+    .intro-more {
+        width: 100%;
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.4s ease, margin-top 0.4s ease;
+
+        .intro-more__inner {
+            overflow: hidden;
+        }
+    }
+
+    // Button wrapper carries the AOS entrance so the button keeps its own
+    // (fast) hover transition instead of inheriting AOS's long duration.
+    .intro-cta {
+        align-self: center;
+        margin-top: 2rem;
+    }
+
+    &.is-open .intro-more {
+        grid-template-rows: 1fr;
+    }
+}

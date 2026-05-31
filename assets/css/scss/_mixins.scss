@@ -6,6 +6,7 @@ $olive:       #808368; // Flax Smoke
 $cream:       #FFF4CF; // Barley White
 $pampas:      #F2F0EE; // Pampas — light bg
 $ink:         #231F20; // Thunder — text
+$black:       #000000;
 $white:       #FFFFFF;
 
 // Semantic aliases (consumed by mixins / theme)
@@ -15,204 +16,138 @@ $accent:    $rust;
 $grey-text: $green-muted;
 $light-bg:  $pampas;
 
-// Breakpoints
-$tablet-min: 768px;
-$tablet-max: 1149px;
-$phone-max: 767px;
-$pc-min: 1150px;
+// Breakpoints (px) — desktop-first: styles apply at this width and below.
+$phone:   480px;
+$tablet:  768px;
+$desktop: 1200px;
 
-@mixin fixed-size($size) {
-    & {
-        width: $size;
-        min-width: $size;
-        max-width: $size;
-        height: $size;
-        min-height: $size;
-        max-height: $size;
-    }
-}
-
-@mixin hover {
-    & {
-        transform: translateY(-5px) !important;
-    }
-}
-@mixin hoverRight {
-    & {
-        transform: translateX(5px) !important;
-    }
-}
+@mixin phone   { @media (max-width: $phone)   { @content; } }
+@mixin tablet  { @media (max-width: $tablet)  { @content; } }
+@mixin desktop { @media (max-width: $desktop) { @content; } }
 
 // Font stacks
-@mixin primary {        // Quicksand — body, headings, links
-    & { font-family: "Quicksand", sans-serif; }
-}
-@mixin display {        // Waterfall — large script/display headings
+@mixin Title {  // Waterfall — all headings
     & { font-family: "Waterfall", cursive; }
 }
-@mixin inter {          // Inter — form inputs & buttons only
-    & { font-family: "Inter", sans-serif; }
+@mixin body {   // Quicksand — everything else
+    & { font-family: "Quicksand", sans-serif; }
 }
 
-// Body — Quicksand 16/24 (Figma "Quicksand/Regular")
+// Button hover (card hover will be a separate mixin when needed).
+@mixin buttonHover {
+    & {
+        transform: translateY(-2px) !important;
+        filter: brightness(0.9);
+    }
+}
+
+@mixin transition {
+    & { transition: all 0.3s ease; }
+}
+
+// Section container — 4rem block padding, 6rem inline, clamped down on mobile.
+@mixin Container {
+    & {
+        padding-block: clamp(2rem, 1.3rem + 3.01vw, 4rem);
+        padding-inline: clamp(1.5rem, -0.08rem + 6.76vw, 6rem);
+    }
+}
+
+// Body text — Quicksand
 @mixin bodyRegular {
     & {
-        font-size: clamp(14px, 13.3px + 0.19vw, 16px);
-        font-weight: 400;
+        font-size: clamp(0.875rem, 0.83rem + 0.19vw, 1rem);
+        font-weight: 500;
         line-height: 150%;
         color: $dark;
-        @include primary;
+        @include body;
     }
 }
 
-// Heading mixins — clamp() scales smoothly from 375px to 1440px viewport
-// H1/H2: Waterfall display script · H3–H5: Quicksand
+// Heading mixins — Waterfall, clamp() scales from 375px to 1440px viewport.
 @mixin h1 {
     & {
-        font-size: clamp(72px, 40.0px + 8.53vw, 110px);
+        font-size: clamp(4.5rem, 2.5rem + 8.53vw, 6.875rem);
         font-weight: 400;
         line-height: 90%;
         color: $dark;
-        margin: 0;
-        @include display;
+        margin: 0 0 2rem;
+        @include Title;
     }
 }
 
-@mixin h2 {  // Figma "Heading 2" — Waterfall 100/90
+@mixin h2 {
     & {
-        font-size: clamp(56px, 28.5px + 7.33vw, 100px);
+        font-size: clamp(3.5rem, 1.78rem + 7.33vw, 6.25rem);
         font-weight: 400;
         line-height: 90%;
-        margin: 0;
+        margin: 0 0 2rem;
         color: $dark;
-        @include display;
+        @include Title;
     }
 }
 
 @mixin h3 {
     & {
-        font-size: clamp(24px, 16.85px + 1.91vw, 32px);
+        font-size: clamp(1.5rem, 1.05rem + 1.91vw, 2rem);
         font-weight: 600;
         line-height: 120%;
-        margin: 0;
+        margin: 0 0 2rem;
         color: $dark;
-        @include primary;
+        @include Title;
     }
 }
 
-@mixin h4 {  // Figma "Heading 4" — Quicksand 18/28 bold
+@mixin h4 {
     & {
-        font-size: clamp(16px, 15.29px + 0.19vw, 18px);
+        font-size: clamp(1rem, 0.96rem + 0.19vw, 1.125rem);
         line-height: 155%;
         font-weight: 700;
-        margin: 0;
+        margin: 0 0 2rem;
         color: $dark;
-        @include primary;
+        @include Title;
     }
 }
 
-@mixin h5 {  // Figma "Heading 5" — Quicksand 16 semibold
+@mixin h5 {
     & {
-        font-size: clamp(14px, 13.3px + 0.19vw, 16px);
+        font-size: clamp(0.875rem, 0.83rem + 0.19vw, 1rem);
         line-height: 140%;
         font-weight: 600;
         color: $dark;
-        margin: 0;
-        @include primary;
+        margin: 0 0 2rem;
+        @include Title;
     }
 }
 
 // Label text (uppercase small)
 @mixin label {
     & {
-        font-size: clamp(12px, 10.59px + 0.38vw, 16px);
+        font-size: clamp(0.75rem, 0.66rem + 0.38vw, 1rem);
         line-height: 120%;
         font-weight: 600;
         text-transform: uppercase;
         color: $accent;
+        @include body;
     }
 }
 
-// Nav / inline link — Quicksand 14 semibold (Figma "Link")
+// Nav / inline link — Quicksand semibold
 @mixin link {
     & {
-        font-size: 14px;
-        line-height: 24px;
+        font-size: 0.875rem;
+        line-height: 1.5rem;
         font-weight: 600;
-        @include primary;
+        @include body;
     }
 }
 
-// Button label — Inter bold (Figma "Button")
+// Button label
 @mixin button {
     & {
-        font-size: 13px;
+        font-size: 0.875rem;
         line-height: 1;
         font-weight: 700;
-        text-transform: uppercase;
-        @include inter;
-    }
-}
-
-@mixin tablet {
-    @media (min-width: #{$tablet-min}) and (max-width: #{$tablet-max}) {
-        @content;
-    }
-}
-@mixin phone {
-    @media (max-width: #{$phone-max}) {
-        @content;
-    }
-}
-@mixin pc {
-    @media (min-width: #{$pc-min}) {
-        @content;
-    }
-}
-@mixin min-md {
-    @media (min-width: #{$tablet-min}) {
-        @content;
-    }
-}
-@mixin min-lg {
-    @media (min-width: 64rem) {
-        @content;
-    }
-}
-
-@mixin transition {
-    & {
-        transition: all 0.3s ease;
-    }
-}
-@mixin transform {
-    & {
-        transform: translate(-50%, -50%);
-    }
-}
-@mixin transform-y {
-    & {
-        transform: translate(0, -50%);
-    }
-}
-@mixin transform-x {
-    & {
-        transform: translate(-50%, 0);
-    }
-}
-
-@mixin padding {
-    & {
-        padding-left: 30px;
-        padding-right: 30px;
-
-        @include tablet {
-            padding-left: 20px;
-            padding-right: 20px;
-        }
-        @include phone {
-            padding-left: 16px;
-            padding-right: 16px;
-        }
+        @include body;
     }
 }

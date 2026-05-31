@@ -2,7 +2,9 @@
 if (typeof AOS !== 'undefined') {
     AOS.init({
         once: true,
-        offset: 50
+        offset: 50,
+        duration: 800,
+        easing: 'ease-out-cubic'
     });
 }
 
@@ -11,6 +13,19 @@ document.querySelectorAll('.faq-toggle').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var item = this.closest('.faq-item');
         item.classList.toggle('-active');
+    });
+});
+
+// Intro "read more" toggle — reveals hidden text within the same section
+document.querySelectorAll('.intro-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var section = this.closest('.section-intro');
+        if (!section) return;
+        var open = section.classList.toggle('is-open');
+        this.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (this.dataset.labelOpen && this.dataset.labelClose) {
+            this.textContent = open ? this.dataset.labelClose : this.dataset.labelOpen;
+        }
     });
 });
 

@@ -3,11 +3,10 @@
 @use 'ui';
 @use 'header';
 @use 'footer';
-@use 'gform';
 
 section,
 footer#siteFooter {
-    @include padding;
+    @include Container;
 }
 
 .container {
@@ -41,7 +40,7 @@ body {
     z-index: 1;
     position: relative;
     overflow-x: hidden;
-    @include primary;
+    @include body;
 
     * {
         -webkit-font-smoothing: antialiased;
@@ -59,7 +58,12 @@ body {
     h3 { @include h3; }
     h4 { @include h4; }
     h5 { @include h5; }
-    p  { @include bodyRegular; margin: 0; }
+    p  {
+        @include bodyRegular;
+        margin: 0 0 1rem;
+
+        &:last-child { margin-bottom: 0; }
+    }
 }
 
 .otgs-development-site-front-end {

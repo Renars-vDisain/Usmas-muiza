@@ -25,13 +25,15 @@ $style  = $has_bg ? ' style="background-image:url(' . esc_url( $background['url'
 	<div class="hero-inner">
 
 		<?php if ( is_array( $logo ) && ! empty( $logo['url'] ) ) : ?>
-			<img class="hero-logo" src="<?php echo esc_url( $logo['url'] ); ?>" alt="<?php echo esc_attr( ! empty( $logo['alt'] ) ? $logo['alt'] : get_bloginfo( 'name' ) ); ?>" loading="eager">
+			<img class="hero-logo" src="<?php echo esc_url( $logo['url'] ); ?>" alt="<?php echo esc_attr( ! empty( $logo['alt'] ) ? $logo['alt'] : get_bloginfo( 'name' ) ); ?>" loading="eager" data-aos="fade-up">
 		<?php endif; ?>
 
 		<?php if ( $button && ! empty( $button['url'] ) ) : ?>
-			<a class="hero-button" href="<?php echo esc_url( $button['url'] ); ?>"<?php echo ! empty( $button['target'] ) ? ' target="' . esc_attr( $button['target'] ) . '"' : ''; ?>>
-				<?php echo esc_html( ! empty( $button['title'] ) ? $button['title'] : __( 'Lasīt vairāk', 'usmasmuiza' ) ); ?>
-			</a>
+			<div class="hero-cta" data-aos="fade-up" data-aos-delay="100">
+				<a class="btn" href="<?php echo esc_url( $button['url'] ); ?>"<?php echo ! empty( $button['target'] ) ? ' target="' . esc_attr( $button['target'] ) . '"' : ''; ?>>
+					<?php echo esc_html( ! empty( $button['title'] ) ? $button['title'] : __( 'Lasīt vairāk', 'usmasmuiza' ) ); ?>
+				</a>
+			</div>
 		<?php endif; ?>
 
 	</div>

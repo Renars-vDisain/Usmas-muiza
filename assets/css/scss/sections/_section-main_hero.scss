@@ -18,7 +18,7 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: rgba($ink, 0.35);
+        background: rgba($black, 0.5);
         z-index: 1;
     }
 
@@ -39,17 +39,4 @@
         height: auto;
     }
 
-    .hero-button {
-        @include button;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 16px 32px;
-        color: $cream;
-        background: $accent;
-        border-radius: 100px;
-        @include transition;
-
-        &:hover { @include hover; }
-    }
 }
