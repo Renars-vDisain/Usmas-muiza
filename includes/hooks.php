@@ -57,10 +57,11 @@ function usmasmuiza_csp_policy() {
 		"object-src 'none'",
 		"frame-ancestors 'self'",
 		"form-action 'self'",
+		"worker-src 'self' blob:", // WP emoji loader (and some plugins) spin up blob workers.
 		"img-src 'self' data: https:",
-		"font-src 'self' data: https://fonts.gstatic.com",
-		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://maps.googleapis.com https://www.gstatic.com https://*.sirvoy.com",
+		"font-src 'self' data: https://fonts.gstatic.com https://*.sirvoy.com",
+		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.sirvoy.com",
+		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://maps.googleapis.com https://www.google.com https://www.gstatic.com https://*.sirvoy.com",
 		"connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://maps.googleapis.com https://*.sirvoy.com",
 		"frame-src 'self' https://*.sirvoy.com https://www.google.com https://maps.google.com",
 	);
@@ -96,6 +97,11 @@ function usmasmuiza_security_headers( $headers ) {
 	return $headers;
 }
 add_filter( 'wp_headers', 'usmasmuiza_security_headers' );
+
+// Enforce the Content-Security-Policy (vs Report-Only). Verified against the
+// site's real resources: Google Maps iframe, Sirvoy, Google Fonts — all covered.
+// To roll back to Report-Only instantly, delete this single line.
+add_filter( 'usmasmuiza_csp_enforce', '__return_true' );
 
 // Disable XML-RPC — a common brute-force / pingback amplification surface that
 // this site does not use. Remove this line if a service needs XML-RPC.
