@@ -59,7 +59,7 @@ $id_attr = $anchor ? ' id="' . esc_attr( $anchor ) . '"' : '';
 
 		<?php if ( $form_id ) : ?>
 			<div class="contact-form gf-styled" data-aos="fade-up" data-aos-delay="100">
-				<?php echo do_shortcode( '[gravityform id="' . esc_attr( $form_id ) . '" title="false" description="false" ajax="true"]' ); ?>
+				<?php echo do_shortcode( '[gravityform id="' . absint( $form_id ) . '" title="false" description="false" ajax="true"]' ); ?>
 			</div>
 		<?php endif; ?>
 

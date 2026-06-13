@@ -60,11 +60,11 @@ function usmasmuiza_csp_policy() {
 		"img-src 'self' data: https:",
 		"font-src 'self' data: https://fonts.gstatic.com",
 		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://*.sirvoy.com",
-		"connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://*.sirvoy.com",
+		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://maps.googleapis.com https://www.gstatic.com https://*.sirvoy.com",
+		"connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://maps.googleapis.com https://*.sirvoy.com",
 		"frame-src 'self' https://*.sirvoy.com https://www.google.com https://maps.google.com",
 	);
-	return implode( '; ', $directives );
+	return apply_filters( 'usmasmuiza_csp_directives', implode( '; ', $directives ) );
 }
 
 /**
@@ -82,7 +82,13 @@ function usmasmuiza_security_headers( $headers ) {
 	$headers['X-Frame-Options']        = 'SAMEORIGIN';
 	$headers['Referrer-Policy']        = 'strict-origin-when-cross-origin';
 	$headers['Permissions-Policy']     = 'geolocation=(), camera=(), microphone=(), interest-cohort=()';
-	$headers['Content-Security-Policy-Report-Only'] = usmasmuiza_csp_policy();
+	// Report-Only by default (never blocks). Once the browser console / reports
+	// are clean, flip to enforcing by returning true from this filter:
+	//   add_filter( 'usmasmuiza_csp_enforce', '__return_true' );
+	$csp_header = apply_filters( 'usmasmuiza_csp_enforce', false )
+		? 'Content-Security-Policy'
+		: 'Content-Security-Policy-Report-Only';
+	$headers[ $csp_header ] = usmasmuiza_csp_policy();
 	// HSTS only over HTTPS, so a local/HTTP environment is never pinned to TLS.
 	if ( is_ssl() ) {
 		$headers['Strict-Transport-Security'] = 'max-age=15552000; includeSubDomains';

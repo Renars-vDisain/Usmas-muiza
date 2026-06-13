@@ -36,6 +36,17 @@ $allowed_iframe = array(
 		'title'           => true,
 	),
 );
+
+// Only render the iframe when its src points at Google Maps. This stops an
+// editor (or a compromised account) from embedding an arbitrary third-party
+// iframe through this field; anything else is dropped.
+$embed_safe = '';
+if ( $embed && preg_match( '/<iframe[^>]+src=["\']([^"\']+)["\']/i', $embed, $src_match ) ) {
+	$host = strtolower( (string) wp_parse_url( $src_match[1], PHP_URL_HOST ) );
+	if ( in_array( $host, array( 'www.google.com', 'google.com', 'maps.google.com' ), true ) ) {
+		$embed_safe = wp_kses( $embed, $allowed_iframe );
+	}
+}
 ?>
 <section class="section-map"<?php echo $id_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 
@@ -43,9 +54,9 @@ $allowed_iframe = array(
 		<h2 class="map-title" data-aos="fade-up"><?php echo esc_html( $heading ); ?></h2>
 	<?php endif; ?>
 
-	<?php if ( $embed ) : ?>
+	<?php if ( $embed_safe ) : ?>
 		<div class="container map-embed" data-aos="fade-up" data-aos-delay="100">
-			<?php echo wp_kses( $embed, $allowed_iframe ); ?>
+			<?php echo $embed_safe; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized via wp_kses + host allow-list above ?>
 		</div>
 	<?php endif; ?>
 

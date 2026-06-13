@@ -75,7 +75,7 @@ $out .= '<footer id="siteFooter">';
 
 				if ( $news_form ) {
 					// Gravity Forms supplies its own title (the field label).
-					$out .= do_shortcode( '[gravityform id="' . esc_attr( $news_form ) . '" title="false" description="false" ajax="true"]' );
+					$out .= do_shortcode( '[gravityform id="' . absint( $news_form ) . '" title="false" description="false" ajax="true"]' );
 				}
 
 				if ( $socials ) {
