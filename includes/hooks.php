@@ -11,6 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define('ACF_INCLUDE_LEGACY_ICON_CHOICES', true);
 
+// Block the admin theme/plugin file editors — code is managed via Git, so the
+// in-dashboard editor is an unnecessary remote-code-execution surface if an
+// admin account is compromised. (Ideally also set in wp-config.php.)
+if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
+	define( 'DISALLOW_FILE_EDIT', true );
+}
+
 // Enable excerpts for pages
 add_post_type_support( 'page', 'excerpt' );
 
@@ -48,6 +55,10 @@ function usmasmuiza_security_headers( $headers ) {
 	$headers['X-Frame-Options']        = 'SAMEORIGIN';
 	$headers['Referrer-Policy']        = 'strict-origin-when-cross-origin';
 	$headers['Permissions-Policy']     = 'geolocation=(), camera=(), microphone=(), interest-cohort=()';
+	// HSTS only over HTTPS, so a local/HTTP environment is never pinned to TLS.
+	if ( is_ssl() ) {
+		$headers['Strict-Transport-Security'] = 'max-age=15552000; includeSubDomains';
+	}
 	return $headers;
 }
 add_filter( 'wp_headers', 'usmasmuiza_security_headers' );
@@ -55,6 +66,19 @@ add_filter( 'wp_headers', 'usmasmuiza_security_headers' );
 // Disable XML-RPC — a common brute-force / pingback amplification surface that
 // this site does not use. Remove this line if a service needs XML-RPC.
 add_filter( 'xmlrpc_enabled', '__return_false' );
+
+/**
+ * Block anonymous username enumeration via the REST API (/wp-json/wp/v2/users).
+ * Logged-in requests are unaffected, so the editor and plugins keep working.
+ */
+function usmasmuiza_restrict_rest_user_endpoints( $endpoints ) {
+	if ( is_user_logged_in() ) {
+		return $endpoints;
+	}
+	unset( $endpoints['/wp/v2/users'], $endpoints['/wp/v2/users/(?P<id>[\d]+)'] );
+	return $endpoints;
+}
+add_filter( 'rest_endpoints', 'usmasmuiza_restrict_rest_user_endpoints' );
 
 /**
  * Remove default Posts post type from admin
@@ -142,14 +166,18 @@ add_filter( 'use_block_editor_for_post', '__return_false' );
 add_filter( 'use_block_editor_for_post_type', '__return_false' );
 
 /**
- * Disable revisions for all post types
+ * Ensure content revisions are available for editorial recovery.
+ *
+ * Runs at init priority 20 (after the custom post types register) so
+ * add_post_type_support takes effect for them. Revisions let editors roll back
+ * accidental or malicious content changes.
  */
-function usmasmuiza_disable_revisions() {
-    foreach ( get_post_types( array(), 'names' ) as $post_type ) {
-        remove_post_type_support( $post_type, 'revisions' );
+function usmasmuiza_enable_revisions() {
+    foreach ( array( 'page', 'room', 'offer', 'jaunums' ) as $post_type ) {
+        add_post_type_support( $post_type, 'revisions' );
     }
 }
-add_action( 'init', 'usmasmuiza_disable_revisions' );
+add_action( 'init', 'usmasmuiza_enable_revisions', 20 );
 
 /**
  * Disable comments and discussions globally
@@ -290,162 +318,3 @@ function usmasmuiza_acf_anchor_admin_css() {
 	<?php
 }
 add_action( 'acf/input/admin_head', 'usmasmuiza_acf_anchor_admin_css' );
-
-/**
- * Menu Item Hover SVG Elements
- * Adds decorative SVG hover effects under primary navigation links.
- * Configurable per menu item in Appearance > Menus.
- *
- * Register each SVG file (placed in /assets/images/svg/{slug}.svg)
- * in the array below to expose it as a hover option.
- */
-function usmasmuiza_get_hover_svgs() {
-	return array(
-		'' => __( 'None', 'usmasmuiza' ),
-	);
-}
-
-// Add hover SVG fields to each nav menu item (Appearance > Menus)
-function usmasmuiza_menu_item_hover_svg_field( $item_id, $item, $depth, $args ) {
-	$hover_svg  = get_post_meta( $item_id, '_menu_item_hover_svg', true );
-	$hover_bottom = get_post_meta( $item_id, '_menu_item_hover_bottom', true );
-	$hover_x    = get_post_meta( $item_id, '_menu_item_hover_x', true );
-	$hover_scale = get_post_meta( $item_id, '_menu_item_hover_scale', true );
-	$svgs = usmasmuiza_get_hover_svgs();
-	?>
-	<p class="field-hover-svg description description-wide">
-		<label for="edit-menu-item-hover-svg-<?php echo esc_attr( $item_id ); ?>">
-			<?php esc_html_e( 'Hover SVG Element', 'usmasmuiza' ); ?>
-			<select id="edit-menu-item-hover-svg-<?php echo esc_attr( $item_id ); ?>" name="menu-item-hover-svg[<?php echo esc_attr( $item_id ); ?>]" class="widefat">
-				<?php foreach ( $svgs as $value => $label ) : ?>
-					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $hover_svg, $value ); ?>><?php echo esc_html( $label ); ?></option>
-				<?php endforeach; ?>
-			</select>
-		</label>
-	</p>
-	<p class="field-hover-svg-position description description-wide">
-		<label><?php esc_html_e( 'Hover SVG Position', 'usmasmuiza' ); ?></label>
-		<span style="display:flex;gap:8px;margin-top:4px;">
-			<label style="flex:1;">
-				<input type="number" name="menu-item-hover-bottom[<?php echo esc_attr( $item_id ); ?>]" value="<?php echo esc_attr( $hover_bottom ); ?>" placeholder="-10" style="width:100%;">
-				<small>Bottom (px)</small>
-			</label>
-			<label style="flex:1;">
-				<input type="number" name="menu-item-hover-x[<?php echo esc_attr( $item_id ); ?>]" value="<?php echo esc_attr( $hover_x ); ?>" placeholder="0" style="width:100%;">
-				<small>X offset (px)</small>
-			</label>
-			<label style="flex:1;">
-				<input type="number" step="0.1" name="menu-item-hover-scale[<?php echo esc_attr( $item_id ); ?>]" value="<?php echo esc_attr( $hover_scale ); ?>" placeholder="1" style="width:100%;">
-				<small>Scale</small>
-			</label>
-		</span>
-	</p>
-	<?php
-}
-add_action( 'wp_nav_menu_item_custom_fields', 'usmasmuiza_menu_item_hover_svg_field', 10, 4 );
-
-// Save hover SVG fields
-function usmasmuiza_save_menu_item_hover_svg( $menu_id, $menu_item_db_id, $args ) {
-	// Save SVG selection
-	if ( isset( $_POST['menu-item-hover-svg'][ $menu_item_db_id ] ) ) {
-		$value = sanitize_text_field( $_POST['menu-item-hover-svg'][ $menu_item_db_id ] );
-		$valid_svgs = array_keys( usmasmuiza_get_hover_svgs() );
-		if ( in_array( $value, $valid_svgs, true ) ) {
-			update_post_meta( $menu_item_db_id, '_menu_item_hover_svg', $value );
-		}
-	}
-
-	// Save position fields
-	$position_fields = array( '_menu_item_hover_bottom', '_menu_item_hover_x', '_menu_item_hover_scale' );
-	$post_keys = array( 'menu-item-hover-bottom', 'menu-item-hover-x', 'menu-item-hover-scale' );
-
-	foreach ( $position_fields as $i => $meta_key ) {
-		$post_key = $post_keys[ $i ];
-		if ( isset( $_POST[ $post_key ][ $menu_item_db_id ] ) ) {
-			$val = sanitize_text_field( $_POST[ $post_key ][ $menu_item_db_id ] );
-			if ( $val !== '' ) {
-				update_post_meta( $menu_item_db_id, $meta_key, $val );
-			} else {
-				delete_post_meta( $menu_item_db_id, $meta_key );
-			}
-		}
-	}
-}
-add_action( 'wp_update_nav_menu_item', 'usmasmuiza_save_menu_item_hover_svg', 10, 3 );
-
-/**
- * Get the menu item ID that holds hover SVG settings.
- * Falls back to the default language menu item if current one has no settings.
- */
-function usmasmuiza_get_hover_svg_source_id( $item_id ) {
-	$hover_svg = get_post_meta( $item_id, '_menu_item_hover_svg', true );
-
-	if ( ! empty( $hover_svg ) ) {
-		return $item_id;
-	}
-
-	// Fallback: check the default language menu item
-	$default_lang = apply_filters( 'wpml_default_language', null );
-	$current_lang = apply_filters( 'wpml_current_language', null );
-
-	if ( ! $default_lang || ! $current_lang || $current_lang === $default_lang ) {
-		return $item_id;
-	}
-
-	$original_id = apply_filters( 'wpml_object_id', $item_id, 'nav_menu_item', true, $default_lang );
-
-	if ( $original_id && $original_id !== $item_id ) {
-		$original_svg = get_post_meta( $original_id, '_menu_item_hover_svg', true );
-		if ( ! empty( $original_svg ) ) {
-			return $original_id;
-		}
-	}
-
-	return $item_id;
-}
-
-// Inject hover SVG into menu item output on the frontend
-function usmasmuiza_inject_hover_svg( $item_output, $item, $depth, $args ) {
-	if ( ! isset( $args->theme_location ) || $args->theme_location !== 'primary-menu' || $depth !== 0 ) {
-		return $item_output;
-	}
-
-	$source_id = usmasmuiza_get_hover_svg_source_id( $item->ID );
-	$hover_svg = get_post_meta( $source_id, '_menu_item_hover_svg', true );
-
-	if ( empty( $hover_svg ) ) {
-		return $item_output;
-	}
-
-	$svg_path = get_stylesheet_directory() . '/assets/images/svg/' . $hover_svg . '.svg';
-
-	if ( ! file_exists( $svg_path ) ) {
-		return $item_output;
-	}
-
-	// Build inline style from position settings
-	$bottom = get_post_meta( $source_id, '_menu_item_hover_bottom', true );
-	$x      = get_post_meta( $source_id, '_menu_item_hover_x', true );
-	$scale  = get_post_meta( $source_id, '_menu_item_hover_scale', true );
-
-	$style_parts = array();
-	if ( $bottom !== '' && $bottom !== false ) {
-		$style_parts[] = '--hover-bottom:' . intval( $bottom ) . 'px';
-	}
-	if ( $x !== '' && $x !== false ) {
-		$style_parts[] = '--hover-x:' . intval( $x ) . 'px';
-	}
-	if ( $scale !== '' && $scale !== false ) {
-		$style_parts[] = '--hover-scale:' . floatval( $scale );
-	}
-
-	$style_attr = ! empty( $style_parts ) ? ' style="' . esc_attr( implode( ';', $style_parts ) ) . '"' : '';
-
-	$svg_content = file_get_contents( $svg_path );
-	$hover_element = '<span class="menu-hover-svg menu-hover-svg--' . esc_attr( $hover_svg ) . '"' . $style_attr . '>' . $svg_content . '</span>';
-
-	$item_output .= $hover_element;
-
-	return $item_output;
-}
-add_filter( 'walker_nav_menu_start_el', 'usmasmuiza_inject_hover_svg', 10, 4 );

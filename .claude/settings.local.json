@@ -136,7 +136,10 @@
       "Bash(gh auth *)",
       "Bash(git remote *)",
       "Bash(git push *)",
-      "Bash(git ls-remote *)"
+      "Bash(git ls-remote *)",
+      "Bash(sed -n '140,155p' includes/hooks.php)",
+      "Bash(sed -n '302,307p' includes/hooks.php)",
+      "Bash(sed -n '19,95p' includes/post-types.php)"
     ]
   }
 }
