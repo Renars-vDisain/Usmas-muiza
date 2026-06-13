@@ -11,12 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define('ACF_INCLUDE_LEGACY_ICON_CHOICES', true);
 
-// Block the admin theme/plugin file editors — code is managed via Git, so the
-// in-dashboard editor is an unnecessary remote-code-execution surface if an
-// admin account is compromised. (Ideally also set in wp-config.php.)
-if ( ! defined( 'DISALLOW_FILE_EDIT' ) ) {
-	define( 'DISALLOW_FILE_EDIT', true );
-}
+// Note: DISALLOW_FILE_EDIT (and optionally DISALLOW_FILE_MODS) now live in
+// wp-config.php — the canonical place, loaded before the theme. Keep them in
+// sync on the live server's wp-config.php.
 
 // Enable excerpts for pages
 add_post_type_support( 'page', 'excerpt' );
@@ -39,13 +36,43 @@ add_filter( 'login_url', 'usmasmuiza_strip_lang_from_login_url', 999 );
 add_filter( 'logout_url', 'usmasmuiza_strip_lang_from_login_url', 999 );
 
 /**
+ * Front-end Content-Security-Policy, shipped in **Report-Only** mode.
+ *
+ * Report-Only never blocks anything — the browser only reports what a real
+ * policy *would* have blocked (visible in DevTools console / report-uri). This
+ * lets us watch for missed sources before enforcing. Covers the known sources:
+ * Sirvoy (booking iframe), Google Maps (map iframe), Google Fonts, and Google
+ * analytics (Site Kit). 'unsafe-inline'/'unsafe-eval' are kept because WordPress
+ * core, Gravity Forms and analytics emit inline scripts/styles.
+ *
+ * To ENFORCE later: review reports, tighten sources, then change the header
+ * name from 'Content-Security-Policy-Report-Only' to 'Content-Security-Policy'.
+ *
+ * @return string
+ */
+function usmasmuiza_csp_policy() {
+	$directives = array(
+		"default-src 'self'",
+		"base-uri 'self'",
+		"object-src 'none'",
+		"frame-ancestors 'self'",
+		"form-action 'self'",
+		"img-src 'self' data: https:",
+		"font-src 'self' data: https://fonts.gstatic.com",
+		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://*.sirvoy.com",
+		"connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://*.sirvoy.com",
+		"frame-src 'self' https://*.sirvoy.com https://www.google.com https://maps.google.com",
+	);
+	return implode( '; ', $directives );
+}
+
+/**
  * Baseline security response headers (front end).
  *
  * Conservative, low-risk hardening that won't break the booking iframe, forms
- * or analytics. A Content-Security-Policy is intentionally NOT enforced here —
- * it needs per-site tuning (Sirvoy, Gravity Forms, fonts, analytics) and a
- * blocking policy would break the page; add it deliberately once sources are
- * inventoried, ideally first in Report-Only mode.
+ * or analytics. CSP ships Report-Only (see usmasmuiza_csp_policy) so it can be
+ * tuned from real reports before being enforced.
  */
 function usmasmuiza_security_headers( $headers ) {
 	if ( is_admin() ) {
@@ -55,6 +82,7 @@ function usmasmuiza_security_headers( $headers ) {
 	$headers['X-Frame-Options']        = 'SAMEORIGIN';
 	$headers['Referrer-Policy']        = 'strict-origin-when-cross-origin';
 	$headers['Permissions-Policy']     = 'geolocation=(), camera=(), microphone=(), interest-cohort=()';
+	$headers['Content-Security-Policy-Report-Only'] = usmasmuiza_csp_policy();
 	// HSTS only over HTTPS, so a local/HTTP environment is never pinned to TLS.
 	if ( is_ssl() ) {
 		$headers['Strict-Transport-Security'] = 'max-age=15552000; includeSubDomains';
@@ -79,6 +107,23 @@ function usmasmuiza_restrict_rest_user_endpoints( $endpoints ) {
 	return $endpoints;
 }
 add_filter( 'rest_endpoints', 'usmasmuiza_restrict_rest_user_endpoints' );
+
+/**
+ * Block ?author=N username enumeration on the front end (the classic scanner
+ * that maps user IDs to login slugs via the author archive redirect). Logged-in
+ * users and admin are unaffected. The site has no author archives, so anonymous
+ * author queries simply go home.
+ */
+function usmasmuiza_block_author_enumeration() {
+	if ( is_admin() || is_user_logged_in() ) {
+		return;
+	}
+	if ( isset( $_GET['author'] ) || is_author() ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		wp_safe_redirect( home_url( '/' ), 301 );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'usmasmuiza_block_author_enumeration' );
 
 /**
  * Remove default Posts post type from admin

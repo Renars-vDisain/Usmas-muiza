@@ -2380,7 +2380,7 @@
                             "name": "shortcode",
                             "aria-label": "",
                             "type": "textarea",
-                            "instructions": "Only allow-listed shortcodes render here: [sirvoy ...] (booking widget) and [gravityform ...]. Anything else is ignored for security.",
+                            "instructions": "Only the [sirvoy ...] booking-widget shortcode renders here. Anything else is ignored for security.",
                             "required": 0,
                             "conditional_logic": 0,
                             "wrapper": {
@@ -2424,7 +2424,7 @@
     "description": "Flexible content layouts for inner content pages (Viesnīca, Restorāns, SPA...).",
     "show_in_rest": 0,
     "display_title": "",
-    "modified": 1781344932,
+    "modified": 1781346861,
     "local_file": "",
     "acfml_field_group_mode": "advanced"
 }

@@ -116,7 +116,7 @@ function usmasmuiza_localize_url( $url ) {
  * @param string[] $allowed Allow-listed shortcode tags.
  * @return string Rendered HTML, or '' if not allowed.
  */
-function usmasmuiza_render_allowed_shortcode( $content, $allowed = array( 'sirvoy', 'gravityform' ) ) {
+function usmasmuiza_render_allowed_shortcode( $content, $allowed = array( 'sirvoy' ) ) {
 	if ( ! is_string( $content ) || '' === trim( $content ) ) {
 		return '';
 	}
